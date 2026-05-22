@@ -35,21 +35,59 @@
             overflow: hidden;
         }
 
-        /* 頂部標題 - 加入 env() 避開 iPhone 16 Pro Max 動態島 */
+        /* 頂部標題 */
         .header {
             padding-top: calc(20px + env(safe-area-inset-top, 20px));
-            padding-bottom: 20px;
+            padding-bottom: 15px;
             text-align: center;
             font-size: 20px;
             font-weight: 600;
             flex-shrink: 0;
         }
 
+        /* iOS 風格分頁切換 (Segmented Control) */
+        .tabs {
+            display: flex;
+            margin: 0 20px 15px;
+            background: #E5E5EA;
+            border-radius: 8px;
+            padding: 3px;
+            flex-shrink: 0;
+        }
+
+        .tab-btn {
+            flex: 1;
+            text-align: center;
+            padding: 8px 0;
+            font-size: 14px;
+            font-weight: 600;
+            color: var(--text-main);
+            border-radius: 6px;
+            cursor: pointer;
+            transition: 0.2s;
+        }
+
+        .tab-btn.active {
+            background: #FFFFFF;
+            box-shadow: 0 1px 3px rgba(0,0,0,0.12);
+        }
+
+        /* 頁面視圖容器 */
+        .view-section {
+            display: none;
+            flex-direction: column;
+            flex: 1;
+        }
+
+        .view-section.active {
+            display: flex;
+        }
+
         /* 輸入區 */
         .input-container {
             display: flex;
             justify-content: space-around;
-            padding: 10px 20px;
+            padding: 0 20px 10px;
             gap: 15px;
             flex-shrink: 0;
         }
@@ -76,7 +114,7 @@
         /* 結果顯示區 */
         .results-card {
             background: var(--card-bg);
-            margin: 20px;
+            margin: 10px 20px 20px;
             padding: 20px;
             border-radius: 20px;
             box-shadow: 0 4px 20px rgba(0,0,0,0.08);
@@ -95,7 +133,7 @@
         .res-label { color: var(--text-main); font-weight: 500; }
         .res-value { color: var(--primary-color); font-size: 20px; font-weight: 700; }
 
-        /* 邏輯說明文字 - 利用 Flex 自動置中並佔用剩餘空間，防止將鍵盤推走 */
+        /* 邏輯說明文字 */
         .logic-text {
             flex: 1;
             display: flex;
@@ -108,7 +146,7 @@
             line-height: 1.6;
         }
 
-        /* 自定義數字鍵盤 - 加入 env() 避開底部 Home Bar */
+        /* 自定義數字鍵盤 */
         .keyboard {
             background: #D1D3D9;
             display: grid;
@@ -143,50 +181,89 @@
             right: 8px;
             font-size: 10px;
             color: #8E8E93;
-            pointer-events: none; /* 防止誤觸 */
+            pointer-events: none;
             z-index: 100;
         }
     </style>
 </head>
 <body>
 
-    <div class="header">抽濕機效能計算</div>
+    <div class="header">數據計算器</div>
 
-    <div class="input-container">
-        <div id="box-daily" class="input-box active" onpointerdown="handleInputSwitch(event, 'daily')">
-            <div class="label">每日抽濕 (L)</div>
-            <div id="val-daily" class="value">0</div>
+    <!-- 分頁切換按鈕 -->
+    <div class="tabs">
+        <div id="tab-performance" class="tab-btn active" onpointerdown="switchMode(event, 'performance')">效能計算</div>
+        <div id="tab-time" class="tab-btn" onpointerdown="switchMode(event, 'time')">降濕時間</div>
+    </div>
+
+    <!-- 視圖 1：效能計算 -->
+    <div id="view-performance" class="view-section active">
+        <div class="input-container">
+            <div id="box-daily" class="input-box active" onpointerdown="handleInputSwitch(event, 'daily')">
+                <div class="label">每日抽濕 (L)</div>
+                <div id="val-daily" class="value">0</div>
+            </div>
+            <div id="box-tank" class="input-box" onpointerdown="handleInputSwitch(event, 'tank')">
+                <div class="label">水箱容量 (L)</div>
+                <div id="val-tank" class="value">0</div>
+            </div>
         </div>
-        <div id="box-tank" class="input-box" onpointerdown="handleInputSwitch(event, 'tank')">
-            <div class="label">水箱容量 (L)</div>
-            <div id="val-tank" class="value">0</div>
+        <div class="results-card">
+            <div class="result-item">
+                <span class="res-label">每日倒水次數</span>
+                <span id="res-times" class="res-value">0 次</span>
+            </div>
+            <div class="result-item">
+                <span class="res-label">每小時抽濕量</span>
+                <span id="res-hourly" class="res-value">0 L</span>
+            </div>
+            <div class="result-item">
+                <span class="res-label">水箱滿水時間</span>
+                <span id="res-full" class="res-value">--</span>
+            </div>
+        </div>
+        <div class="logic-text">
+            <div>
+                能源效率計算方法:抽濕量 x 450 ÷ 24 ÷ 每年耗電量 = 能源效率<br>
+                每日抽濕量 ÷ 水箱容量 = 每日倒水次數<br>
+                每日抽濕量 ÷ 24(小時) = 每小時抽濕量<br>
+                水箱容量 ÷ 每小時抽濕量 = 水箱滿水時間
+            </div>
         </div>
     </div>
 
-    <div class="results-card">
-        <div class="result-item">
-            <span class="res-label">每日倒水次數</span>
-            <span id="res-times" class="res-value">0 次</span>
+    <!-- 視圖 2：降濕時間 -->
+    <div id="view-time" class="view-section">
+        <div class="input-container">
+            <div id="box-capacity" class="input-box" onpointerdown="handleInputSwitch(event, 'capacity')">
+                <div class="label">抽濕能力 (L)</div>
+                <div id="val-capacity" class="value">0</div>
+            </div>
+            <div id="box-area" class="input-box" onpointerdown="handleInputSwitch(event, 'area')">
+                <div class="label">空間面積 (ft²)</div>
+                <div id="val-area" class="value">0</div>
+            </div>
         </div>
-        <div class="result-item">
-            <span class="res-label">每小時抽濕量</span>
-            <span id="res-hourly" class="res-value">0 L</span>
+        <div class="results-card">
+            <div class="result-item">
+                <span class="res-label">換算空間體積</span>
+                <span id="res-vol" class="res-value">0 m³</span>
+            </div>
+            <div class="result-item">
+                <span class="res-label">降濕所需時間</span>
+                <span id="res-time-req" class="res-value" style="color: #FF3B30;">--</span>
+            </div>
         </div>
-        <div class="result-item">
-            <span class="res-label">水箱滿水時間</span>
-            <span id="res-full" class="res-value">--</span>
+        <div class="logic-text">
+            <div>
+                計算條件：樓底高度以 2.5m 計算<br>
+                目標：濕度由 90% 下降至 60%<br>
+                公式常數取自 20m³/86ft² 標準測試數據 (30公升需16分鐘)
+            </div>
         </div>
     </div>
 
-    <div class="logic-text">
-        <div>
-            能源效率計算方法:抽濕量 x 450 ÷ 24 ÷ 每年耗電量 = 能源效率<br>
-            每日抽濕量 ÷ 水箱容量 = 每日倒水次數<br>
-            每日抽濕量 ÷ 24(小時) = 每小時抽濕量<br>
-            水箱容量 ÷ 每小時抽濕量 = 水箱滿水時間
-        </div>
-    </div>
-
+    <!-- 自定義鍵盤 (共用) -->
     <div class="keyboard">
         <div class="key" onpointerdown="handleKey(event, '1')">1</div>
         <div class="key" onpointerdown="handleKey(event, '2')">2</div>
@@ -204,65 +281,69 @@
         <div class="key enter" style="grid-column: span 2;" onpointerdown="handleKey(event, 'ENTER')">ENTER</div>
     </div>
 
-    <div class="version">Ver 2.1.1</div>
+    <div class="version">Ver 3.0</div>
 
     <script>
-        // --- 核心防禦：完全阻擋所有非預期的系統手勢 ---
+        // --- 核心防禦 ---
         document.addEventListener('touchmove', function(e) { e.preventDefault(); }, { passive: false });
         document.addEventListener('gesturestart', function(e) { e.preventDefault(); });
         document.addEventListener('dblclick', function(e) { e.preventDefault(); });
 
-        // --- 音效引擎 (Web Audio API) ---
+        // --- 音效引擎 ---
         let audioCtx;
         function playClickSound() {
             try {
                 if (!audioCtx) {
                     audioCtx = new (window.AudioContext || window.webkitAudioContext)();
                 }
-                if (audioCtx.state === 'suspended') {
-                    audioCtx.resume();
-                }
+                if (audioCtx.state === 'suspended') audioCtx.resume();
                 const osc = audioCtx.createOscillator();
                 const gainNode = audioCtx.createGain();
-                
                 osc.type = 'sine';
-                osc.frequency.setValueAtTime(800, audioCtx.currentTime); // 聲音頻率
+                osc.frequency.setValueAtTime(800, audioCtx.currentTime); 
                 osc.frequency.exponentialRampToValueAtTime(100, audioCtx.currentTime + 0.05);
-                
-                gainNode.gain.setValueAtTime(0.15, audioCtx.currentTime); // 音量
+                gainNode.gain.setValueAtTime(0.15, audioCtx.currentTime); 
                 gainNode.gain.exponentialRampToValueAtTime(0.01, audioCtx.currentTime + 0.05);
-                
                 osc.connect(gainNode);
                 gainNode.connect(audioCtx.destination);
-                
                 osc.start();
                 osc.stop(audioCtx.currentTime + 0.05);
-            } catch(e) {
-                // 如果舊機型唔支援就靜音略過
-                console.log("Audio not supported");
+            } catch(e) {}
+        }
+
+        // --- 狀態管理 ---
+        let currentMode = 'performance'; // 'performance' 或 'time'
+        let currentField = 'daily';      // 當前選中的輸入框
+        let data = { daily: '', tank: '', capacity: '', area: '' };
+
+        // --- 模式切換邏輯 ---
+        function switchMode(event, mode) {
+            event.preventDefault();
+            playClickSound();
+            currentMode = mode;
+            
+            // 更新 UI 標籤狀態
+            document.querySelectorAll('.tab-btn').forEach(btn => btn.classList.remove('active'));
+            document.getElementById(`tab-${mode}`).classList.add('active');
+
+            // 切換視圖顯示
+            document.querySelectorAll('.view-section').forEach(view => view.classList.remove('active'));
+            document.getElementById(`view-${mode}`).classList.add('active');
+
+            // 自動將焦點設定為該模式的第一個輸入框
+            if (mode === 'performance') {
+                switchInput('daily');
+            } else {
+                switchInput('capacity');
             }
         }
 
-        let currentField = 'daily';
-        let data = { daily: '', tank: '' };
-
-        // --- 點擊處理 (用 onpointerdown 取代 onclick 達成0延遲) ---
+        // --- 輸入框切換邏輯 ---
         function handleInputSwitch(event, field) {
-            event.preventDefault(); // 防止系統預設選取行為
-            
-            // Ver 2.1.1 新增邏輯：只要人手點擊該輸入框，就自動清空該欄位嘅數據
-            data[field] = ''; 
-            
+            event.preventDefault(); 
+            data[field] = ''; // 點擊即清空該欄位
             switchInput(field);
-            
-            // 點擊清空後，即時更新畫面（將數字變回 0，並重置下方計算結果）
             updateUI(); 
-        }
-
-        function handleKey(event, key) {
-            event.preventDefault(); // 防止雙擊放大或選取
-            playClickSound(); // 播放按鍵聲
-            press(key);
         }
 
         function switchInput(field) {
@@ -271,15 +352,34 @@
             document.getElementById(`box-${field}`).classList.add('active');
         }
 
+        // --- 鍵盤處理邏輯 ---
+        function handleKey(event, key) {
+            event.preventDefault(); 
+            playClickSound(); 
+            press(key);
+        }
+
         function press(key) {
             if (key === 'BACKSPACE') {
                 data[currentField] = data[currentField].slice(0, -1);
             } else if (key === 'CLEAR_ALL') {
-                data = { daily: '', tank: '' };
-                switchInput('daily');
+                // 只清除當前模式的資料
+                if (currentMode === 'performance') {
+                    data.daily = ''; data.tank = '';
+                    switchInput('daily');
+                } else {
+                    data.capacity = ''; data.area = '';
+                    switchInput('capacity');
+                }
             } else if (key === 'ENTER') {
-                if (currentField === 'daily') switchInput('tank');
-                else switchInput('daily');
+                // 根據模式切換焦點
+                if (currentMode === 'performance') {
+                    if (currentField === 'daily') switchInput('tank');
+                    else switchInput('daily');
+                } else {
+                    if (currentField === 'capacity') switchInput('area');
+                    else switchInput('capacity');
+                }
             } else if (key === '.') {
                 if (!data[currentField].includes('.')) data[currentField] += '.';
             } else {
@@ -288,13 +388,17 @@
             updateUI();
         }
 
+        // --- 計算與更新畫面 ---
         function updateUI() {
+            // 更新所有欄位數字顯示
             document.getElementById('val-daily').innerText = data.daily || '0';
             document.getElementById('val-tank').innerText = data.tank || '0';
+            document.getElementById('val-capacity').innerText = data.capacity || '0';
+            document.getElementById('val-area').innerText = data.area || '0';
 
+            // --- 計算模式 1: 效能 ---
             const daily = parseFloat(data.daily) || 0;
             const tank = parseFloat(data.tank) || 0;
-
             if (daily > 0 && tank > 0) {
                 const times = (daily / tank).toFixed(1);
                 document.getElementById('res-times').innerText = `${times} 次`;
@@ -310,6 +414,30 @@
                 document.getElementById('res-times').innerText = '0 次';
                 document.getElementById('res-hourly').innerText = '0 L';
                 document.getElementById('res-full').innerText = '--';
+            }
+
+            // --- 計算模式 2: 降濕時間 ---
+            const capacity = parseFloat(data.capacity) || 0;
+            const area = parseFloat(data.area) || 0;
+            if (capacity > 0 && area > 0) {
+                // 計算體積 (平方尺 -> 平方米 * 2.5米樓底)
+                const volume_m3 = area * 0.0929 * 2.5;
+                document.getElementById('res-vol').innerText = `${volume_m3.toFixed(1)} m³`;
+
+                // 核心公式： (477.5 / 抽濕能力) * (實際體積 / 20立方公尺基準)
+                const volMultiplier = volume_m3 / 20;
+                const totalMins = (477.5 / capacity) * volMultiplier;
+
+                if (totalMins >= 60) {
+                    const h = Math.floor(totalMins / 60);
+                    const m = Math.round(totalMins % 60);
+                    document.getElementById('res-time-req').innerText = `${h} 小時 ${m} 分鐘`;
+                } else {
+                    document.getElementById('res-time-req').innerText = `${Math.round(totalMins)} 分鐘`;
+                }
+            } else {
+                document.getElementById('res-vol').innerText = '0 m³';
+                document.getElementById('res-time-req').innerText = '--';
             }
         }
     </script>
